@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.phonekahawaldar.app',
+  appId: 'com.safeme.app',
   appName: 'Hawaldar',
   webDir: 'dist'
 };
