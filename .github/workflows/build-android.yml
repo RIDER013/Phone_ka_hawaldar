@@ -63,7 +63,7 @@ jobs:
       - name: Build Android Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --no-parallel --max-workers=1 --stacktrace --info
+          ./gradlew clean assembleDebug --no-daemon --no-parallel --max-workers=1 --refresh-dependencies --stacktrace --info
 
       - name: Organize APK Output
         run: |
