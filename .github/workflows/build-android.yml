@@ -63,11 +63,7 @@ jobs:
       - name: Build Android Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --no-parallel -Dorg.gradle.workers.max=1 --stacktrace --console=plain || {
-            echo "Gradle build failed. Checking build logs..."
-            find . -name "*.log" -o -name "build-output*"
-            exit 1
-          }
+          ./gradlew assembleDebug --no-daemon --no-parallel --max-workers=1 --stacktrace --info
 
       - name: Organize APK Output
         run: |
