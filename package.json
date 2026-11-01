@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
+    "update-icons": "tsx scripts/update-icons.ts",
     "build:android": "vite build && mkdir -p android/app/src/main/assets/public && cp -rf dist/* android/app/src/main/assets/public/"
   },
   "dependencies": {
