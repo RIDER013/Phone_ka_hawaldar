@@ -1,349 +1,345 @@
 import React, { useState, useEffect } from 'react';
-import { initialAppsData } from './data/mockApps';
-import { AppItem, ActiveTab, PermissionType } from './types';
-import { Header } from './components/Header';
-import { AppCard } from './components/AppCard';
-import { AppDetailModal } from './components/AppDetailModal';
-import { GameFocusModal } from './components/GameFocusModal';
-import { Gamepad2, Smartphone, Cpu, Activity, Zap } from 'lucide-react';
+import { 
+  Zap, 
+  Battery, 
+  BatteryCharging, 
+  Wifi, 
+  WifiOff, 
+  Gamepad2, 
+  CheckCircle2, 
+  StopCircle, 
+  Activity, 
+  Cpu, 
+  HardDrive, 
+  Smartphone,
+  Lock,
+  Unlock,
+  Trash2,
+  AlertTriangle,
+  X,
+  Radio,
+  Globe,
+  Key
+} from 'lucide-react';
+
+interface AppModel {
+  id: string;
+  name: string;
+  packageName: string;
+  version: string;
+  category: 'installed' | 'system';
+  isRunning: boolean;
+  ramUsageMb: number;
+  batteryUsedMah: number;
+  currentSpeedKbps: number;
+  todayInternetMb: number;
+  permissions: string[];
+}
+
+const initialApps: AppModel[] = [
+  { id: '1', name: 'WhatsApp', packageName: 'com.whatsapp', version: '2.24.10', category: 'installed', isRunning: true, ramUsageMb: 245, batteryUsedMah: 180, currentSpeedKbps: 145, todayInternetMb: 340, permissions: ['Camera', 'Mic', 'Contacts', 'Storage', 'Location'] },
+  { id: '2', name: 'Instagram', packageName: 'com.instagram.android', version: '312.0', category: 'installed', isRunning: true, ramUsageMb: 380, batteryUsedMah: 320, currentSpeedKbps: 450, todayInternetMb: 890, permissions: ['Camera', 'Location', 'Storage', 'Contacts'] },
+  { id: '3', name: 'BGMI', packageName: 'com.pubg.imgi', version: '3.1.0', category: 'installed', isRunning: false, ramUsageMb: 0, batteryUsedMah: 45, currentSpeedKbps: 0, todayInternetMb: 120, permissions: ['Storage', 'Mic', 'Network'] },
+  { id: '4', name: 'YouTube', packageName: 'com.google.android.youtube', version: '19.14', category: 'installed', isRunning: true, ramUsageMb: 310, batteryUsedMah: 410, currentSpeedKbps: 1200, todayInternetMb: 1650, permissions: ['Network', 'Storage', 'Display'] },
+  { id: '5', name: 'Spotify', packageName: 'com.spotify.music', version: '8.9.30', category: 'installed', isRunning: false, ramUsageMb: 0, batteryUsedMah: 30, currentSpeedKbps: 0, todayInternetMb: 210, permissions: ['Audio', 'Storage', 'Network'] },
+  { id: '6', name: 'Android System', packageName: 'android', version: '14.0', category: 'system', isRunning: true, ramUsageMb: 850, batteryUsedMah: 950, currentSpeedKbps: 45, todayInternetMb: 520, permissions: ['Root', 'All Hardware', 'Sensors'] },
+  { id: '7', name: 'Google Play Services', packageName: 'com.google.android.gms', version: '24.12', category: 'system', isRunning: true, ramUsageMb: 420, batteryUsedMah: 280, currentSpeedKbps: 20, todayInternetMb: 310, permissions: ['Location', 'Network', 'Accounts'] },
+  { id: '8', name: 'System UI', packageName: 'com.android.systemui', version: '14.0', category: 'system', isRunning: true, ramUsageMb: 290, batteryUsedMah: 210, currentSpeedKbps: 0, todayInternetMb: 15, permissions: ['Display', 'Overlay', 'Notifications'] },
+];
 
 export default function App() {
-  const [apps, setApps] = useState<AppItem[]>(initialAppsData);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('installed');
-  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
-  const [isFocusModalOpen, setIsFocusModalOpen] = useState<boolean>(false);
+  const [apps, setApps] = useState<AppModel[]>(initialApps);
+  const [activeTab, setActiveTab] = useState<'installed' | 'system'>('installed');
   const [isFocusActive, setIsFocusActive] = useState<boolean>(false);
+  const [selectedApp, setSelectedApp] = useState<AppModel | null>(null);
+  const [storageUsedGb, setStorageUsedGb] = useState<number>(48);
+  const storageTotalGb = 128;
 
-  // Real-time live simulation engine (fluctuates mA live draw and active speed)
+  const [batteryLevel, setBatteryLevel] = useState<number>(87);
+  const [isCharging, setIsCharging] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+
+  // Live simulation ticker for speeds & battery drain
   useEffect(() => {
-    const interval = setInterval(() => {
-      setApps((prevApps) =>
-        prevApps.map((app) => {
-          if (app.state === 'stopped') return app;
-
-          const jitter = (Math.random() - 0.48) * 8;
-          const newDraw = Math.max(10, Math.round(app.battery.liveDrawMa + jitter));
-          const newSpeed = Math.max(0, Math.round(app.dataUsage.currentSpeedKbps + (Math.random() - 0.5) * 10));
-
-          const currentHistory = [...app.battery.history];
-          if (currentHistory.length > 0) {
-            currentHistory[currentHistory.length - 1] = {
-              ...currentHistory[currentHistory.length - 1],
-              drawMa: newDraw,
-            };
-          }
-
+    const timer = setInterval(() => {
+      setApps((prev) =>
+        prev.map((app) => {
+          if (!app.isRunning) return app;
+          const speedFluctuation = Math.max(0, app.currentSpeedKbps + Math.floor((Math.random() - 0.5) * 50));
           return {
             ...app,
-            battery: {
-              ...app.battery,
-              liveDrawMa: newDraw,
-              history: currentHistory,
-            },
-            dataUsage: {
-              ...app.dataUsage,
-              currentSpeedKbps: newSpeed,
-            },
+            currentSpeedKbps: speedFluctuation,
+            batteryUsedMah: app.batteryUsedMah + 1,
+            todayInternetMb: app.todayInternetMb + (speedFluctuation > 100 ? 2 : 0),
           };
         })
       );
-    }, 2600);
-
-    return () => clearInterval(interval);
+    }, 2000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Handler: Toggle Force Stop / Resume
-  const handleToggleForceStop = (appId: string) => {
-    setApps((prevApps) =>
-      prevApps.map((app) => {
-        if (app.id !== appId) return app;
-
-        if (app.state === 'stopped') {
-          return {
-            ...app,
-            state: app.category === 'system' ? 'foreground' : 'background',
-            battery: {
-              ...app.battery,
-              liveDrawMa: Math.max(40, Math.round(app.battery.totalMah / 5)),
-            },
-            ramMb: Math.max(120, app.ramMb || 180),
-          };
-        } else {
-          return {
-            ...app,
-            state: 'stopped',
-            battery: {
-              ...app.battery,
-              liveDrawMa: 0,
-            },
-            cpuPercent: 0,
-            dataUsage: {
-              ...app.dataUsage,
-              currentSpeedKbps: 0,
-            },
-          };
-        }
-      })
-    );
-  };
-
-  // Handler: Clear Cache
-  const handleClearCache = (appId: string) => {
-    setApps((prevApps) =>
-      prevApps.map((app) => {
-        if (app.id !== appId) return app;
-
-        const freedMb = app.storage.cacheMb;
+  const handleToggleApp = (id: string) => {
+    setApps((prev) =>
+      prev.map((app) => {
+        if (app.id !== id) return app;
+        const nextRunning = !app.isRunning;
         return {
           ...app,
-          storage: {
-            ...app.storage,
-            totalMb: Math.max(10, app.storage.totalMb - freedMb),
-            cacheMb: 0,
-          },
+          isRunning: nextRunning,
+          ramUsageMb: nextRunning ? Math.floor(Math.random() * 200) + 120 : 0,
+          currentSpeedKbps: nextRunning ? Math.floor(Math.random() * 300) + 50 : 0,
         };
       })
     );
   };
 
-  // Handler: Toggle Permission
-  const handleTogglePermission = (appId: string, permType: PermissionType) => {
-    setApps((prevApps) =>
-      prevApps.map((app) => {
-        if (app.id !== appId) return app;
-
-        const updatedPermissions = app.permissions.map((p) => {
-          if (p.type !== permType) return p;
-          const willBeGranted = !p.granted;
-          return {
-            ...p,
-            granted: willBeGranted,
-            isCurrentlyActive: willBeGranted ? p.isCurrentlyActive : false,
-            lastAccessedTime: willBeGranted ? 'Granted by user' : 'Revoked by user',
-          };
-        });
-
-        return {
-          ...app,
-          permissions: updatedPermissions,
-        };
-      })
-    );
+  const handleToggleFocusMode = () => {
+    const nextFocus = !isFocusActive;
+    setIsFocusActive(nextFocus);
+    if (nextFocus) {
+      setApps((prev) =>
+        prev.map((app) => (app.category === 'installed' ? { ...app, isRunning: false, ramUsageMb: 0, currentSpeedKbps: 0 } : app))
+      );
+    }
   };
 
-  // Handler: Toggle Background Restriction
-  const handleToggleBackgroundRestriction = (appId: string) => {
-    setApps((prevApps) =>
-      prevApps.map((app) => {
-        if (app.id !== appId) return app;
-        const newRestricted = !app.isBackgroundRestricted;
-        return {
-          ...app,
-          isBackgroundRestricted: newRestricted,
-          battery: {
-            ...app.battery,
-            liveDrawMa: newRestricted ? Math.round(app.battery.liveDrawMa * 0.4) : Math.round(app.battery.liveDrawMa * 1.5),
-          },
-        };
-      })
-    );
-  };
-
-  // Handler: Apply Focus Mode (batch stop selected installed apps)
-  const handleApplyFocusMode = (selectedAppIdsToStop: string[]) => {
-    setApps((prevApps) =>
-      prevApps.map((app) => {
-        if (selectedAppIdsToStop.includes(app.id)) {
-          return {
-            ...app,
-            state: 'stopped',
-            battery: {
-              ...app.battery,
-              liveDrawMa: 0,
-            },
-            cpuPercent: 0,
-            dataUsage: {
-              ...app.dataUsage,
-              currentSpeedKbps: 0,
-            },
-          };
-        }
-        return app;
-      })
-    );
-    setIsFocusActive(true);
-  };
-
-  const handleTurnOffFocusMode = () => {
-    setIsFocusActive(false);
-  };
-
-  // Filter apps strictly by activeTab and sort active apps at the top, stopped/off apps at the bottom
-  const currentListApps = apps
-    .filter((a) => a.category === activeTab)
-    .sort((a, b) => {
-      const aActive = a.state !== 'stopped';
-      const bActive = b.state !== 'stopped';
-
-      if (aActive && !bActive) return -1;
-      if (!aActive && bActive) return 1;
-
-      if (aActive && bActive) {
-        if (a.state === 'foreground' && b.state !== 'foreground') return -1;
-        if (a.state !== 'foreground' && b.state === 'foreground') return 1;
-        return b.battery.liveDrawMa - a.battery.liveDrawMa;
-      }
-
-      return 0;
-    });
-
-  const selectedApp = apps.find((a) => a.id === selectedAppId) || null;
-
-  const activeListApps = currentListApps.filter((a) => a.state !== 'stopped');
-  const stoppedListApps = currentListApps.filter((a) => a.state === 'stopped');
-
-  // Count totals for bottom right and summary panel
-  const installedTotal = apps.filter((a) => a.category === 'installed').length;
-  const installedActive = apps.filter((a) => a.category === 'installed' && a.state !== 'stopped').length;
-  const systemTotal = apps.filter((a) => a.category === 'system').length;
-  const systemActive = apps.filter((a) => a.category === 'system' && a.state !== 'stopped').length;
+  const filteredApps = apps.filter((a) => a.category === activeTab);
+  const activeCount = filteredApps.filter((a) => a.isRunning).length;
+  const totalCount = filteredApps.length;
 
   return (
-    <div 
-      className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-amber-400 selection:text-black relative bg-no-repeat bg-center bg-fixed bg-cover overflow-hidden"
-      style={{
-        backgroundColor: '#e89f1f',
-        backgroundImage: `url('/assets/aistudio/image_6290b92a.png')`,
-      }}
-    >
-      {/* Header: Phone ka Hawaldar & Tabs */}
-      <Header
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      {/* Main Screen: Unified Dashboard / Preview layout ("ekach fill") */}
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 md:px-8 py-2 flex justify-between items-start overflow-hidden">
-        {/* Left Side: Game Mode & Status widgets ("ekdam normal varti ghe") */}
-        <div className="flex flex-col items-start gap-3 z-20 w-48 sm:w-56 pt-0">
-          <button
-            type="button"
-            onClick={() => setIsFocusModalOpen(true)}
-            className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-black/30 hover:bg-black/45 backdrop-blur-xl border border-white/15 hover:border-amber-400/40 shadow-xl transition-all cursor-pointer text-left active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`p-1.5 rounded-xl transition-all ${
-                  isFocusActive
-                    ? 'bg-amber-400 text-black shadow-md shadow-amber-400/30'
-                    : 'bg-white/10 text-amber-300 group-hover:bg-amber-400/20'
-                }`}
-              >
-                <Gamepad2 className="w-4 h-4" />
-              </div>
-              <span className="text-[12px] font-semibold text-white tracking-wide group-hover:text-amber-200">
-                Focus Mode
-              </span>
-            </div>
-            {isFocusActive && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-          </button>
-
-          {/* Unified Preview / Status Card ("ekach fill") */}
-          <div className="w-full p-3 rounded-2xl bg-black/25 backdrop-blur-md border border-white/15 space-y-2 text-[11px] font-mono">
-            <div className="flex items-center justify-between text-white/70 border-b border-white/10 pb-1.5">
-              <span className="lowercase">category</span>
-              <span className="text-amber-300 font-semibold uppercase">{activeTab}</span>
-            </div>
-            <div className="flex items-center justify-between text-white/80">
-              <div className="flex items-center gap-1.5">
-                <Smartphone className="w-3.5 h-3.5 text-amber-300" />
-                <span>Installed</span>
-              </div>
-              <span className="font-bold">{installedActive}/{installedTotal}</span>
-            </div>
-            <div className="flex items-center justify-between text-white/80">
-              <div className="flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-cyan-300" />
-                <span>System</span>
-              </div>
-              <span className="font-bold">{systemActive}/{systemTotal}</span>
+    <div className="min-h-screen bg-[#090604] text-white font-sans flex flex-col items-center justify-center p-2 sm:p-6 select-none">
+      {/* Immersive Phone Frame Mockup */}
+      <div className="w-full max-w-md h-[92vh] max-h-[880px] rounded-[44px] bg-gradient-to-b from-[#2C1B06] via-[#120D08] to-[#090604] border-[6px] border-[#2A241F] shadow-2xl flex flex-col overflow-hidden relative">
+        
+        {/* Android Status Bar */}
+        <div className="w-full px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-mono text-white/50">
+          <span>02:01</span>
+          <div className="w-20 h-4 bg-black/40 rounded-full mx-auto" />
+          <div className="flex items-center gap-1.5">
+            <span>5G</span>
+            <div className="w-5 h-2.5 border border-white/50 rounded-xs p-0.5 flex items-center">
+              <div className="h-full w-3.5 bg-emerald-400 rounded-2xs" />
             </div>
           </div>
         </div>
 
-        {/* Right side vertical flowing app cards dock */}
-        <div className="flex flex-col items-end gap-2.5 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-none py-1 px-1">
-          {/* Active Header & Active Apps */}
-          {activeListApps.length > 0 && (
-            <div className="flex flex-col items-end gap-1.5 w-full">
-              <span className="text-[11px] font-mono tracking-widest lowercase text-white/50 select-none px-1">
-                active
-              </span>
-              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2.5 items-end">
-                {activeListApps.map((app) => (
-                  <AppCard
-                    key={app.id}
-                    app={app}
-                    onSelect={(selected) => setSelectedAppId(selected.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+        {/* APK Header (Clean text header without any icons) */}
+        <div className="px-5 pt-3 pb-2 flex justify-between items-center border-b border-white/15">
+          <div>
+            <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
+              Hawaldar <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#E89F1F]/20 text-[#E89F1F] border border-[#E89F1F]/30">v1.0</span>
+            </h1>
+            <p className="text-[10px] font-mono text-[#E89F1F]">Security & Sentinel</p>
+          </div>
 
-          {/* Stopped Apps */}
-          {stoppedListApps.length > 0 && (
-            <div className="flex flex-col items-end gap-1.5 w-full pt-1">
-              <span className="text-[10px] font-mono tracking-wider lowercase text-white/30 select-none px-1">
-                stopped
-              </span>
-              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2.5 items-end">
-                {stoppedListApps.map((app) => (
-                  <AppCard
-                    key={app.id}
-                    app={app}
-                    onSelect={(selected) => setSelectedAppId(selected.id)}
-                  />
-                ))}
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="px-2.5 py-1 rounded-xl bg-black/50 border border-[#E89F1F]/40 flex items-center gap-1.5 font-mono text-xs">
+              <Battery className="w-3.5 h-3.5 text-sky-400" />
+              <span className="font-bold text-white">{batteryLevel}%</span>
             </div>
-          )}
+
+            <div className="px-2.5 py-1 rounded-xl bg-black/50 border border-emerald-400/40 flex items-center gap-1.5 font-mono text-xs">
+              <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="font-bold text-white">5G</span>
+            </div>
+          </div>
         </div>
-      </main>
 
-      {/* Deep-Dive Inspection Modal */}
-      {selectedApp && (
-        <AppDetailModal
-          app={selectedApp}
-          onClose={() => setSelectedAppId(null)}
-          onTogglePermission={handleTogglePermission}
-          onToggleForceStop={handleToggleForceStop}
-          onClearCache={handleClearCache}
-          onToggleBackgroundRestriction={handleToggleBackgroundRestriction}
-        />
-      )}
+        {/* Dashboard Controls Row */}
+        <div className="p-4 space-y-3 flex-1 flex flex-col overflow-hidden">
+          <div className="flex gap-3">
+            <button
+              onClick={handleToggleFocusMode}
+              className={`flex-1 p-3 rounded-2xl border transition-all flex items-center justify-between cursor-pointer active:scale-98 ${
+                isFocusActive
+                  ? 'bg-emerald-500/20 border-emerald-400/60 shadow-lg shadow-emerald-500/20'
+                  : 'bg-black/40 border-white/15 hover:border-[#E89F1F]/50'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className={`p-2 rounded-xl ${isFocusActive ? 'bg-emerald-400 text-black' : 'bg-[#E89F1F]/20 text-[#E89F1F]'}`}>
+                  <Gamepad2 className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-bold text-white">Focus Mode</div>
+                  <div className="text-[10px] font-mono text-white/60">
+                    {isFocusActive ? 'Active Protection' : 'Tap to Enable'}
+                  </div>
+                </div>
+              </div>
+              {isFocusActive && <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />}
+            </button>
 
-      {/* Game / Focus Mode Modal */}
-      <GameFocusModal
-        apps={apps}
-        isOpen={isFocusModalOpen}
-        isFocusActive={isFocusActive}
-        onClose={() => setIsFocusModalOpen(false)}
-        onApply={handleApplyFocusMode}
-        onTurnOffFocus={handleTurnOffFocusMode}
-      />
+            <div className="p-1 bg-black/40 rounded-2xl border border-white/15 flex items-center gap-1">
+              <button
+                onClick={() => setActiveTab('installed')}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'installed' ? 'bg-[#E89F1F] text-black shadow-md' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Installed
+              </button>
+              <button
+                onClick={() => setActiveTab('system')}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'system' ? 'bg-sky-400 text-black shadow-md' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                System
+              </button>
+            </div>
+          </div>
 
-      {/* Footer: "created by rider" at bottom center in one line */}
-      <footer className="relative z-10 mt-auto py-3 px-4 md:px-8 flex justify-center items-center w-full">
-        <div className="flex justify-center select-none">
-          <p className="text-[10px] sm:text-[11px] text-white/60 lowercase tracking-widest font-mono drop-shadow-sm whitespace-nowrap">
+          <div className="flex justify-between items-center px-1 text-[10px] font-mono text-white/60 uppercase">
+            <span>{activeTab} Apps ({activeCount} active / {totalCount} total)</span>
+            <span className="text-[#E89F1F]">Storage: {storageUsedGb}GB / {storageTotalGb}GB</span>
+          </div>
+
+          {/* App List (Tapping opens telemetry & permissions inspection modal) */}
+          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-white/20">
+            {filteredApps.map((app) => (
+              <div
+                key={app.id}
+                onClick={() => setSelectedApp(app)}
+                className="p-3 rounded-2xl bg-black/40 border border-white/12 hover:border-[#E89F1F]/60 transition-all flex items-center justify-between cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleApp(app.id);
+                    }}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                      app.isRunning ? 'bg-emerald-400/20 text-emerald-400' : 'bg-white/10 text-white/40'
+                    }`}
+                    title="Click to Stop/Resume App"
+                  >
+                    {app.isRunning ? <CheckCircle2 className="w-5 h-5" /> : <StopCircle className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white group-hover:text-[#E89F1F] transition-colors">{app.name}</div>
+                    <div className="text-[9px] font-mono text-white/50">{app.packageName} • v{app.version}</div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className={`text-[11px] font-mono font-bold ${app.isRunning ? 'text-sky-400' : 'text-white/30'}`}>
+                    {app.isRunning ? `${app.ramUsageMb} MB` : 'Stopped'}
+                  </div>
+                  <div className="text-[9px] font-mono text-[#E89F1F]">
+                    Tap for Stats & Permissions
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="py-3 text-center border-t border-white/10 bg-black/30">
+          <p className="text-[10px] font-mono tracking-widest text-white/60 lowercase">
             created by rider
           </p>
         </div>
-      </footer>
+
+        {/* Deep-Dive App Inspection Modal (Battery Used, Speed, Internet, Permissions) */}
+        {selectedApp && (
+          <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col justify-end p-4 animate-in fade-in duration-200">
+            <div className="w-full bg-[#18110B] border border-[#E89F1F]/40 rounded-3xl p-5 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+              
+              <button 
+                onClick={() => setSelectedApp(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-3 pr-8">
+                <div className="w-12 h-12 rounded-2xl bg-[#E89F1F]/20 border border-[#E89F1F]/40 flex items-center justify-center text-[#E89F1F] font-bold text-lg">
+                  {selectedApp.name.charAt(0)}
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">{selectedApp.name}</h2>
+                  <p className="text-[10px] font-mono text-white/50">{selectedApp.packageName}</p>
+                </div>
+              </div>
+
+              {/* Telemetry Metrics Grid */}
+              <div className="grid grid-cols-2 gap-2.5 font-mono">
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-sky-400">
+                    <Battery className="w-3.5 h-3.5" />
+                    <span>Battery Used</span>
+                  </div>
+                  <div className="text-sm font-bold text-white">{selectedApp.batteryUsedMah} mAh</div>
+                  <div className="text-[9px] text-white/50">Today's power draw</div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                    <Radio className="w-3.5 h-3.5 animate-pulse" />
+                    <span>Current Speed</span>
+                  </div>
+                  <div className="text-sm font-bold text-white">{selectedApp.currentSpeedKbps} KB/s</div>
+                  <div className="text-[9px] text-white/50">Live network rate</div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 space-y-1 col-span-2">
+                  <div className="flex items-center gap-1.5 text-xs text-amber-300">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Total Internet Used Today</span>
+                  </div>
+                  <div className="text-base font-bold text-white">{selectedApp.todayInternetMb} MB</div>
+                  <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-1">
+                    <div 
+                      className="bg-amber-400 h-full rounded-full transition-all" 
+                      style={{ width: `${Math.min(100, (selectedApp.todayInternetMb / 2000) * 100)}%` }} 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Permissions Section */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-white/70">
+                  <Key className="w-3.5 h-3.5 text-[#E89F1F]" />
+                  <span>Required & Requested Permissions</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedApp.permissions.map((perm, idx) => (
+                    <span 
+                      key={idx}
+                      className="px-2.5 py-1 rounded-xl bg-black/50 border border-white/15 text-[11px] font-mono text-[#E89F1F]"
+                    >
+                      {perm}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    handleToggleApp(selectedApp.id);
+                    setSelectedApp(null);
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    selectedApp.isRunning 
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30' 
+                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                  }`}
+                >
+                  {selectedApp.isRunning ? 'Force Stop App' : 'Resume App'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
-
