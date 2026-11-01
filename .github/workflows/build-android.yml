@@ -1,4 +1,4 @@
-name: Build Android APK (Phone ka Hawaldar)
+name: Build Android APK (Hawaldar)
 
 on:
   push:
@@ -53,20 +53,20 @@ jobs:
       - name: Build Android Debug APK
         run: |
           cd android
-          ./gradlew clean assembleDebug --stacktrace --info --full-stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace --info
 
       - name: Organize APK Output
         run: |
           mkdir -p build-output
-          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/PhoneKaHawaldar-v1.0.0-debug.apk
-          echo "APK successfully built at build-output/PhoneKaHawaldar-v1.0.0-debug.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/Hawaldar-v1.0.0-debug.apk
+          echo "APK successfully built at build-output/Hawaldar-v1.0.0-debug.apk"
 
       # Available in the GitHub Actions tab under Artifacts
       - name: Upload APK to GitHub Actions Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: PhoneKaHawaldar-Android-APK
-          path: build-output/PhoneKaHawaldar-v1.0.0-debug.apk
+          name: Hawaldar-Android-APK
+          path: build-output/Hawaldar-v1.0.0-debug.apk
           retention-days: 30
 
       # Automatically publish APK to GitHub Releases tab when a release/tag is published
@@ -74,6 +74,6 @@ jobs:
         if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: build-output/PhoneKaHawaldar-v1.0.0-debug.apk
+          files: build-output/Hawaldar-v1.0.0-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
