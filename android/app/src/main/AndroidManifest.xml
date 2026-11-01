@@ -25,12 +25,12 @@
         android:label="Hawaldar"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+        android:theme="@style/Theme.Material3.Dark.NoActionBar">
 
         <activity
             android:name=".MainActivity"
             android:label="Hawaldar"
-            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:theme="@style/Theme.Material3.Dark.NoActionBar"
             android:launchMode="singleTask"
             android:exported="true">
 
