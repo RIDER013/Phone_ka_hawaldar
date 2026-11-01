@@ -99,6 +99,20 @@ export default function App() {
       conn.addEventListener('change', updateConn);
     }
 
+    // 3. Load Real Installed Apps from Android Device PackageManager via AndroidBridge
+    try {
+      if ((window as any).AndroidBridge?.getInstalledAppsJson) {
+        const jsonStr = (window as any).AndroidBridge.getInstalledAppsJson();
+        const parsedApps = JSON.parse(jsonStr);
+        if (parsedApps && parsedApps.length > 0) {
+          setApps(parsedApps.map((a: any) => ({
+            ...a,
+            currentSpeedKbps: a.isRunning ? Math.floor(Math.random() * 400) + 50 : 0
+          })));
+        }
+      }
+    } catch (_) {}
+
     // Live simulation ticker for real-time battery drain speed per second
     const timer = setInterval(() => {
       setApps((prev) =>
