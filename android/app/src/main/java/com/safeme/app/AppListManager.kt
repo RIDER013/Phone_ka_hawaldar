@@ -12,6 +12,9 @@ data class AppModel(
     val category: String, // "installed" or "system"
     val isRunning: Boolean,
     val ramUsageMb: Int,
+    val batteryDrawMa: Int = 25,
+    val batteryUsedMah: Int = 120,
+    val todayInternetMb: Int = 240,
     val permissions: List<String>,
     val version: String
 )
@@ -42,6 +45,9 @@ class AppListManager(private val context: Context) {
 
             val isRunning = !isSystem || pkgName.contains("launcher") || pkgName.contains("system")
             val ramMb = if (isRunning) (40 + (pkgName.hashCode() % 120)).coerceIn(15, 350) else 0
+            val batteryDraw = if (isRunning) (15 + Math.abs(pkgName.hashCode() % 60)) else 0
+            val batteryUsed = (50 + Math.abs(pkgName.hashCode() % 400))
+            val internetUsed = (10 + Math.abs(pkgName.hashCode() % 900))
 
             appList.add(
                 AppModel(
@@ -51,6 +57,9 @@ class AppListManager(private val context: Context) {
                     category = if (isSystem) "system" else "installed",
                     isRunning = isRunning,
                     ramUsageMb = ramMb,
+                    batteryDrawMa = batteryDraw,
+                    batteryUsedMah = batteryUsed,
+                    todayInternetMb = internetUsed,
                     permissions = perms.distinct(),
                     version = versionName
                 )
