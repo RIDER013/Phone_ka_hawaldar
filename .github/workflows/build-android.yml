@@ -44,8 +44,10 @@ jobs:
       - name: Build Web Application
         run: npm run build
 
-      - name: Sync Capacitor Android Project
-        run: npx cap sync android
+      - name: Copy Web Assets to Android Assets
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          cp -rf dist/* android/app/src/main/assets/public/
 
       - name: Cache Gradle Wrapper and Caches
         uses: actions/cache@v4
