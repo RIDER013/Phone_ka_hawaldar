@@ -28,7 +28,7 @@ async function updateIcons() {
     if (target.name) {
       const outPath = path.join(fullDir, target.name);
       await sharp(sourceImage)
-        .resize(target.size, target.size)
+        .resize(target.size, target.size, { fit: 'contain', background: { r: 7, g: 11, b: 25, alpha: 1 } })
         .png()
         .toFile(outPath);
       console.log(`Generated: ${outPath}`);
@@ -37,12 +37,12 @@ async function updateIcons() {
       const roundPath = path.join(fullDir, 'ic_launcher_round.png');
       
       await sharp(sourceImage)
-        .resize(target.size, target.size)
+        .resize(target.size, target.size, { fit: 'contain', background: { r: 7, g: 11, b: 25, alpha: 1 } })
         .png()
         .toFile(iconPath);
       
       await sharp(sourceImage)
-        .resize(target.size, target.size)
+        .resize(target.size, target.size, { fit: 'contain', background: { r: 7, g: 11, b: 25, alpha: 1 } })
         .png()
         .toFile(roundPath);
 
@@ -50,7 +50,17 @@ async function updateIcons() {
     }
   }
 
-  console.log('All APK launcher icons updated successfully from uploaded image!');
+  // Also update ic_launcher_background.xml to match the dark navy background (#070b19)
+  const bgColorPath = path.resolve(process.cwd(), 'android/app/src/main/res/values/ic_launcher_background.xml');
+  const bgColorContent = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#070B19</color>
+</resources>
+`;
+  fs.writeFileSync(bgColorPath, bgColorContent, 'utf-8');
+  console.log('Updated ic_launcher_background.xml to match image background.');
+
+  console.log('All APK launcher icons and adaptive backgrounds updated successfully!');
 }
 
 updateIcons().catch(err => {
