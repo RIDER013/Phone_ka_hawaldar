@@ -73,7 +73,9 @@ fun HawaldarAppTheme(
     var apps by remember { mutableStateOf<List<AppModel>>(emptyList()) }
     var activeTab by remember { mutableStateOf("installed") } // "installed" or "system"
     var isFocusActive by remember { mutableStateOf(false) }
-    var storageUsedGb by remember { mutableStateOf(0) }
+    var isFocusModalOpen by remember { mutableStateOf(false) }
+    var selectedApp by remember { mutableStateOf<AppModel?>(null) }
+    var storageUsedGb by remember { mutableStateOf(48) }
     var storageTotalGb by remember { mutableStateOf(128) }
 
     LaunchedEffect(Unit) {
@@ -90,13 +92,30 @@ fun HawaldarAppTheme(
         }
     }
 
-    val filteredApps = apps.filter { it.category == activeTab }
+    // Toggle app running state
+    val handleToggleApp: (String) -> Unit = { appId ->
+        apps = apps.map { app ->
+            if (app.id == appId) {
+                val nextRunning = !app.isRunning
+                app.copy(
+                    isRunning = nextRunning,
+                    ramUsageMb = if (nextRunning) (120..350).random() else 0
+                )
+            } else app
+        }
+    }
+
+    // Filter and sort apps: active apps with green icons at the top, stopped at the bottom
+    val filteredApps = apps
+        .filter { it.category == activeTab }
+        .sortedWith(compareByDescending { it.isRunning })
+
     val activeCount = filteredApps.count { it.isRunning }
     val totalCount = filteredApps.size
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF120D08)
+        color = Color(0xFF090604)
     ) {
         Box(
             modifier = Modifier
@@ -202,7 +221,7 @@ fun HawaldarAppTheme(
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { isFocusActive = !isFocusActive },
+                            .clickable { isFocusModalOpen = true },
                         shape = RoundedCornerShape(16.dp),
                         color = Color.Black.copy(alpha = 0.4f),
                         border = BorderStroke(1.dp, if (isFocusActive) Color(0xFF4ADE80).copy(alpha = 0.6f) else Color.White.copy(alpha = 0.15f))
@@ -235,7 +254,7 @@ fun HawaldarAppTheme(
                                         color = Color.White
                                     )
                                     Text(
-                                        text = if (isFocusActive) "Active Protection" else "Tap to Enable",
+                                        text = if (isFocusActive) "Active Protection" else "Tap to Configure",
                                         fontSize = 10.sp,
                                         fontFamily = FontFamily.Monospace,
                                         color = if (isFocusActive) Color(0xFF4ADE80) else Color.White.copy(alpha = 0.6f)
@@ -319,7 +338,7 @@ fun HawaldarAppTheme(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // App Cards List
+                // App Cards List (Tapping opens inspection modal with battery used, speed, internet, permissions)
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -328,9 +347,12 @@ fun HawaldarAppTheme(
                 ) {
                     items(filteredApps) { app ->
                         Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedApp = app },
                             shape = RoundedCornerShape(16.dp),
                             color = Color.Black.copy(alpha = 0.35f),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
+                            border = BorderStroke(1.dp, if (app.isRunning) Color(0xFF4ADE80).copy(alpha = 0.4f) else Color.White.copy(alpha = 0.12f))
                         ) {
                             Row(
                                 modifier = Modifier
@@ -348,13 +370,14 @@ fun HawaldarAppTheme(
                                         modifier = Modifier
                                             .size(36.dp)
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(if (app.isRunning) Color(0xFF4ADE80).copy(alpha = 0.2f) else Color.White.copy(alpha = 0.1f)),
+                                            .background(if (app.isRunning) Color(0xFF4ADE80) else Color.White.copy(alpha = 0.1f))
+                                            .clickable { handleToggleApp(app.id) },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = if (app.isRunning) Icons.Default.CheckCircle else Icons.Default.Stop,
                                             contentDescription = null,
-                                            tint = if (app.isRunning) Color(0xFF4ADE80) else Color.White.copy(alpha = 0.5f),
+                                            tint = if (app.isRunning) Color.Black else Color.White.copy(alpha = 0.5f),
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -383,14 +406,12 @@ fun HawaldarAppTheme(
                                         fontWeight = FontWeight.Bold,
                                         color = if (app.isRunning) Color(0xFF38BDF8) else Color.White.copy(alpha = 0.4f)
                                     )
-                                    if (app.permissions.isNotEmpty()) {
-                                        Text(
-                                            text = app.permissions.joinToString(", "),
-                                            fontSize = 9.sp,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = Color(0xFFE89F1F)
-                                        )
-                                    }
+                                    Text(
+                                        text = "Tap for Stats",
+                                        fontSize = 9.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = Color(0xFFE89F1F)
+                                    )
                                 }
                             }
                         }
@@ -410,6 +431,165 @@ fun HawaldarAppTheme(
                         fontFamily = FontFamily.Monospace,
                         color = Color.White.copy(alpha = 0.6f)
                     )
+                }
+            }
+
+            // App Inspection Dialog Modal
+            if (selectedApp != null) {
+                val app = selectedApp!!
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.85f))
+                        .clickable { selectedApp = null },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .wrapContentHeight()
+                            .clickable(enabled = false) {},
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color(0xFF18110B),
+                        border = BorderStroke(1.dp, Color(0xFFE89F1F).copy(alpha = 0.5f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = app.name,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = app.packageName,
+                                        fontSize = 10.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = Color(0xFFE89F1F)
+                                    )
+                                }
+                                IconButton(onClick = { selectedApp = null }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                                }
+                            }
+
+                            // Metrics Grid
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Surface(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color.Black.copy(alpha = 0.5f)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Text(text = "Battery Used", fontSize = 10.sp, color = Color(0xFF38BDF8), fontFamily = FontFamily.Monospace)
+                                        Text(text = "${app.batteryUsedMah} mAh", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Monospace)
+                                    }
+                                }
+
+                                Surface(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color.Black.copy(alpha = 0.5f)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Text(text = "Data Used", fontSize = 10.sp, color = Color(0xFF4ADE80), fontFamily = FontFamily.Monospace)
+                                        Text(text = "${app.todayInternetMb} MB", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Monospace)
+                                    }
+                                }
+                            }
+
+                            // Permissions
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(text = "Permissions", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Monospace)
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    app.permissions.forEach { perm ->
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color.Black.copy(alpha = 0.6f),
+                                            border = BorderStroke(1.dp, Color(0xFFE89F1F).copy(alpha = 0.3f))
+                                        ) {
+                                            Text(
+                                                text = perm,
+                                                fontSize = 10.sp,
+                                                fontFamily = FontFamily.Monospace,
+                                                color = Color(0xFFE89F1F),
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    handleToggleApp(app.id)
+                                    selectedApp = null
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (app.isRunning) Color(0xFFF43F5E) else Color(0xFF4ADE80)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (app.isRunning) "Force Stop App" else "Start App",
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Focus Mode Dialog
+            if (isFocusModalOpen) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.85f))
+                        .clickable { isFocusModalOpen = false },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .wrapContentHeight()
+                            .clickable(enabled = false) {},
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color(0xFF18110B),
+                        border = BorderStroke(1.dp, Color(0xFF4ADE80).copy(alpha = 0.5f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(text = "Focus Mode & Optimization", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = "Stop background running apps to save battery and boost performance.", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f))
+
+                            Button(
+                                onClick = {
+                                    apps = apps.map { it.copy(isRunning = false, ramUsageMb = 0) }
+                                    isFocusActive = true
+                                    isFocusModalOpen = false
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(text = "Stop All Running Apps", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
         }
