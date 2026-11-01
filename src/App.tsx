@@ -223,9 +223,9 @@ export default function App() {
       />
 
       {/* Main Screen: Unified Dashboard / Preview layout ("ekach fill") */}
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 md:px-8 py-1 flex justify-between items-start overflow-hidden">
-        {/* Left Side: Game Mode & Status widgets moved higher up ("ekdam normal varti ghe") */}
-        <div className="flex flex-col items-start gap-2.5 z-20 w-48 sm:w-56 pt-0">
+      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 md:px-8 py-2 flex justify-between items-start overflow-hidden">
+        {/* Left Side: Game Mode & Status widgets ("ekdam normal varti ghe") */}
+        <div className="flex flex-col items-start gap-3 z-20 w-48 sm:w-56 pt-0">
           <button
             type="button"
             onClick={() => setIsFocusModalOpen(true)}
@@ -346,3 +346,4 @@ export default function App() {
     </div>
   );
 }
+

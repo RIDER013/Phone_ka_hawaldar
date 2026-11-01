@@ -1,6 +1,7 @@
 import React from 'react';
 import { Smartphone, Cpu } from 'lucide-react';
 import { ActiveTab } from '../types';
+import { PhoneBatteryIndicator } from './PhoneBatteryIndicator';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -15,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-transparent border-none px-4 md:px-8 py-3.5">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
         {/* Phone ka Hawaldar - Prominent Header */}
-        <div className="flex items-center gap-2.5 select-none">
+        <div className="flex items-center gap-3 select-none">
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
               Hawaldar
@@ -26,8 +27,14 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Apps Switcher */}
+        {/* Right side controls: Real Browser API Battery Capsule + Apps Switcher */}
         <div className="flex items-center gap-2">
+          {/* Real Device Battery Status Capsule */}
+          <div className="flex items-center gap-1.5">
+            <PhoneBatteryIndicator />
+          </div>
+
+          {/* Apps Switcher */}
           <div className="flex items-center gap-1.5 p-1 bg-black/35 backdrop-blur-md rounded-xl border border-white/10">
             <button
               onClick={() => onTabChange('installed')}
@@ -59,3 +66,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+
