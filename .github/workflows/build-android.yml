@@ -47,6 +47,16 @@ jobs:
       - name: Sync Capacitor Android Project
         run: npx cap sync android
 
+      - name: Cache Gradle Wrapper and Caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('android/**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
 
