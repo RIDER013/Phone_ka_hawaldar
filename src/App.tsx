@@ -66,12 +66,40 @@ export default function App() {
     { id: 'background', name: 'Background Data Sync', isActive: true, icon: Server },
   ]);
 
-  const [batteryLevel] = useState<number>(87);
+  const [batteryLevel, setBatteryLevel] = useState<number>(87);
+  const [isCharging, setIsCharging] = useState<boolean>(false);
+  const [networkStatus, setNetworkStatus] = useState<string>('5G Active');
   const [storageUsedGb] = useState<number>(48);
   const storageTotalGb = 128;
 
-  // Live simulation ticker for real-time battery drain speed per second
+  // Real device battery & network telemetry integration
   useEffect(() => {
+    // 1. Real Battery API
+    if ('getBattery' in navigator) {
+      (navigator as any).getBattery().then((battery: any) => {
+        setBatteryLevel(Math.round(battery.level * 100));
+        setIsCharging(battery.charging);
+        battery.addEventListener('levelchange', () => {
+          setBatteryLevel(Math.round(battery.level * 100));
+        });
+        battery.addEventListener('chargingchange', () => {
+          setIsCharging(battery.charging);
+        });
+      }).catch(() => {});
+    }
+
+    // 2. Real Network Connection API
+    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (conn) {
+      const updateConn = () => {
+        const type = conn.effectiveType ? conn.effectiveType.toUpperCase() : '5G';
+        setNetworkStatus(`${type} Active`);
+      };
+      updateConn();
+      conn.addEventListener('change', updateConn);
+    }
+
+    // Live simulation ticker for real-time battery drain speed per second
     const timer = setInterval(() => {
       setApps((prev) =>
         prev.map((app) => {
@@ -159,11 +187,6 @@ export default function App() {
         {/* Header */}
         <header className="py-4 px-2 flex justify-between items-center border-b border-white/15">
           <div className="flex items-center gap-3">
-            <img 
-              src="/assets/aistudio/file_000000004fd08210969fc7f45c4a83e2_3fdb1851.png" 
-              alt="App Icon" 
-              className="w-11 h-11 rounded-2xl border border-[#E89F1F]/40 object-cover shadow-lg"
-            />
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                 Hawaldar <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E89F1F]/20 text-[#E89F1F] border border-[#E89F1F]/30">v1.0</span>
@@ -180,7 +203,7 @@ export default function App() {
 
             <div className="px-3 py-1.5 rounded-xl bg-black/50 border border-emerald-400/40 flex items-center gap-2 font-mono text-xs sm:text-sm">
               <Wifi className="w-4 h-4 text-emerald-400" />
-              <span className="font-bold text-white">5G Active</span>
+              <span className="font-bold text-white">{networkStatus}</span>
             </div>
           </div>
         </header>
