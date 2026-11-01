@@ -1,6 +1,6 @@
 {
-  "name": "Phone ka Hawaldar",
-  "description": "Phone ka Hawaldar - Device management, optimization, app inspection, and focus mode sentinel with Marathi and English support.",
+  "name": "Hawaldar",
+  "description": "Hawaldar - Device management, optimization, app inspection, and focus mode sentinel.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2.5 select-none">
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
-              Phone ka Hawaldar
+              Hawaldar
             </h1>
             <p className="text-[10px] font-mono text-white/70 uppercase tracking-widest">
               Security & Device Sentinel
