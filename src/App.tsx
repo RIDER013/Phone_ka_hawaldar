@@ -41,21 +41,21 @@ interface SystemToggle {
 }
 
 const initialApps: AppModel[] = [
-  { id: '1', name: 'WhatsApp', packageName: 'com.whatsapp', version: '2.24.10', category: 'installed', isRunning: true, ramUsageMb: 245, batteryDrawMa: 58, batteryUsedMah: 180, currentSpeedKbps: 145, todayInternetMb: 340, permissions: ['Camera', 'Mic', 'Contacts', 'Storage', 'Location'] },
-  { id: '2', name: 'Instagram', packageName: 'com.instagram.android', version: '312.0', category: 'installed', isRunning: true, ramUsageMb: 380, batteryDrawMa: 85, batteryUsedMah: 320, currentSpeedKbps: 450, todayInternetMb: 890, permissions: ['Camera', 'Location', 'Storage', 'Contacts'] },
+  { id: '1', name: 'WhatsApp', packageName: 'com.whatsapp', version: '2.24.10', category: 'installed', isRunning: true, ramUsageMb: 245, batteryDrawMa: 78, batteryUsedMah: 240, currentSpeedKbps: 145, todayInternetMb: 340, permissions: ['Camera', 'Mic', 'Contacts', 'Storage', 'Location'] },
+  { id: '2', name: 'Instagram', packageName: 'com.instagram.android', version: '312.0', category: 'installed', isRunning: true, ramUsageMb: 380, batteryDrawMa: 110, batteryUsedMah: 490, currentSpeedKbps: 450, todayInternetMb: 890, permissions: ['Camera', 'Location', 'Storage', 'Contacts'] },
   { id: '3', name: 'BGMI', packageName: 'com.pubg.imgi', version: '3.1.0', category: 'installed', isRunning: false, ramUsageMb: 0, batteryDrawMa: 0, batteryUsedMah: 45, currentSpeedKbps: 0, todayInternetMb: 120, permissions: ['Storage', 'Mic', 'Network'] },
-  { id: '4', name: 'YouTube', packageName: 'com.google.android.youtube', version: '19.14', category: 'installed', isRunning: true, ramUsageMb: 310, batteryDrawMa: 72, batteryUsedMah: 410, currentSpeedKbps: 1200, todayInternetMb: 1650, permissions: ['Network', 'Storage', 'Display'] },
+  { id: '4', name: 'YouTube', packageName: 'com.google.android.youtube', version: '19.14', category: 'installed', isRunning: true, ramUsageMb: 310, batteryDrawMa: 95, batteryUsedMah: 510, currentSpeedKbps: 1200, todayInternetMb: 1650, permissions: ['Network', 'Storage', 'Display'] },
   { id: '5', name: 'Spotify', packageName: 'com.spotify.music', version: '8.9.30', category: 'installed', isRunning: false, ramUsageMb: 0, batteryDrawMa: 0, batteryUsedMah: 30, currentSpeedKbps: 0, todayInternetMb: 210, permissions: ['Audio', 'Storage', 'Network'] },
-  { id: '6', name: 'Android System', packageName: 'android', version: '14.0', category: 'system', isRunning: true, ramUsageMb: 850, batteryDrawMa: 90, batteryUsedMah: 950, currentSpeedKbps: 45, todayInternetMb: 520, permissions: ['Root', 'All Hardware', 'Sensors'] },
-  { id: '7', name: 'Google Play Services', packageName: 'com.google.android.gms', version: '24.12', category: 'system', isRunning: true, ramUsageMb: 420, batteryDrawMa: 35, batteryUsedMah: 280, currentSpeedKbps: 20, todayInternetMb: 310, permissions: ['Location', 'Network', 'Accounts'] },
-  { id: '8', name: 'System UI', packageName: 'com.android.systemui', version: '14.0', category: 'system', isRunning: true, ramUsageMb: 290, batteryDrawMa: 28, batteryUsedMah: 210, currentSpeedKbps: 0, todayInternetMb: 15, permissions: ['Display', 'Overlay', 'Notifications'] },
+  { id: '6', name: 'Android System', packageName: 'android', version: '14.0', category: 'system', isRunning: true, ramUsageMb: 850, batteryDrawMa: 65, batteryUsedMah: 950, currentSpeedKbps: 45, todayInternetMb: 520, permissions: ['Root', 'All Hardware', 'Sensors'] },
+  { id: '7', name: 'Google Play Services', packageName: 'com.google.android.gms', version: '24.12', category: 'system', isRunning: true, ramUsageMb: 420, batteryDrawMa: 40, batteryUsedMah: 280, currentSpeedKbps: 20, todayInternetMb: 310, permissions: ['Location', 'Network', 'Accounts'] },
+  { id: '8', name: 'System UI', packageName: 'com.android.systemui', version: '14.0', category: 'system', isRunning: true, ramUsageMb: 290, batteryDrawMa: 30, batteryUsedMah: 210, currentSpeedKbps: 0, todayInternetMb: 15, permissions: ['Display', 'Overlay', 'Notifications'] },
 ];
 
 export default function App() {
   const [apps, setApps] = useState<AppModel[]>(initialApps);
   const [activeTab, setActiveTab] = useState<'installed' | 'system'>('installed');
   const [isFocusModalOpen, setIsFocusModalOpen] = useState<boolean>(false);
-  const [selectedApp, setSelectedApp] = useState<AppModel | null>(null);
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [isFocusActive, setIsFocusActive] = useState<boolean>(false);
 
   const [systemToggles, setSystemToggles] = useState<SystemToggle[]>([
@@ -70,24 +70,24 @@ export default function App() {
   const [storageUsedGb] = useState<number>(48);
   const storageTotalGb = 128;
 
-  // Live simulation ticker for battery draw and speed
+  // Live simulation ticker for real-time battery drain speed per second
   useEffect(() => {
     const timer = setInterval(() => {
       setApps((prev) =>
         prev.map((app) => {
           if (!app.isRunning) return app;
-          const drawJitter = Math.max(10, app.batteryDrawMa + Math.floor((Math.random() - 0.5) * 6));
+          const drawJitter = Math.max(15, app.batteryDrawMa + Math.floor((Math.random() - 0.5) * 8));
           const speedFluctuation = Math.max(0, app.currentSpeedKbps + Math.floor((Math.random() - 0.5) * 50));
           return {
             ...app,
             batteryDrawMa: drawJitter,
             currentSpeedKbps: speedFluctuation,
-            batteryUsedMah: app.batteryUsedMah + 1,
-            todayInternetMb: app.todayInternetMb + (speedFluctuation > 100 ? 2 : 0),
+            batteryUsedMah: app.batteryUsedMah + 2,
+            todayInternetMb: app.todayInternetMb + (speedFluctuation > 100 ? 3 : 0),
           };
         })
       );
-    }, 1500);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -100,7 +100,7 @@ export default function App() {
           ...app,
           isRunning: nextRunning,
           ramUsageMb: nextRunning ? Math.floor(Math.random() * 200) + 120 : 0,
-          batteryDrawMa: nextRunning ? Math.floor(Math.random() * 50) + 25 : 0,
+          batteryDrawMa: nextRunning ? Math.floor(Math.random() * 50) + 40 : 0,
           currentSpeedKbps: nextRunning ? Math.floor(Math.random() * 300) + 50 : 0,
         };
       })
@@ -134,7 +134,7 @@ export default function App() {
     setIsFocusModalOpen(false);
   };
 
-  // Sort apps: Active apps at the top, sorted by highest battery consumption (batteryDrawMa), inactive apps at the bottom in deep black
+  // Sort apps: Highest battery consumer at the very top, active apps first, inactive apps in deep black at bottom
   const filteredApps = apps
     .filter((a) => a.category === activeTab)
     .sort((a, b) => {
@@ -148,6 +148,7 @@ export default function App() {
 
   const activeCount = filteredApps.filter((a) => a.isRunning).length;
   const totalCount = filteredApps.length;
+  const selectedApp = apps.find((a) => a.id === selectedAppId) || null;
 
   return (
     <div className="min-h-screen w-full bg-[#090604] text-white font-sans flex flex-col selection:bg-amber-400 selection:text-black">
@@ -202,7 +203,7 @@ export default function App() {
                 <div className="text-left">
                   <div className="text-sm font-bold text-white">Focus Mode & Toggles</div>
                   <div className="text-xs font-mono text-white/60">
-                    {isFocusActive ? 'Active Protection & Toggles Optimized' : 'Tap to Configure Apps & System Toggles'}
+                    {isFocusActive ? 'Active Protection & Toggles Optimized' : 'Tap to Force Stop Apps & Turn Off Toggles'}
                   </div>
                 </div>
               </div>
@@ -234,12 +235,12 @@ export default function App() {
             <span className="text-[#E89F1F]">Storage: {storageUsedGb}GB / {storageTotalGb}GB</span>
           </div>
 
-          {/* App List (Active apps sorted by highest battery consumption at top; inactive apps in deep black at bottom) */}
+          {/* App List (Sorted by highest battery consumer at top, inactive in deep black at bottom) */}
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-white/20">
             {filteredApps.map((app) => (
               <div
                 key={app.id}
-                onClick={() => setSelectedApp(app)}
+                onClick={() => setSelectedAppId(app.id)}
                 className={`p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer group ${
                   app.isRunning 
                     ? 'bg-black/70 border-emerald-500/40 hover:border-emerald-400/80 shadow-lg' 
@@ -287,13 +288,13 @@ export default function App() {
           </p>
         </footer>
 
-        {/* Detailed App Inspection Page Modal (Real-time battery consumption per second, total battery used, daily data used, active permissions) */}
+        {/* Detailed App Inspection Page Modal (Live Battery Drain Per Second) */}
         {selectedApp && (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="w-full max-w-lg bg-[#18110B] border border-[#E89F1F]/40 rounded-3xl p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
               
               <button 
-                onClick={() => setSelectedApp(null)}
+                onClick={() => setSelectedAppId(null)}
                 className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -316,7 +317,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Telemetry & Metrics Grid (Real-time battery consumption per second) */}
+              {/* Telemetry & Metrics Grid (Live Battery Speed per second) */}
               <div className="grid grid-cols-2 gap-3 font-mono">
                 <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-1">
                   <div className="flex items-center gap-2 text-xs text-emerald-400">
@@ -374,7 +375,7 @@ export default function App() {
                 <button
                   onClick={() => {
                     handleToggleApp(selectedApp.id);
-                    setSelectedApp(null);
+                    setSelectedAppId(null);
                   }}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
                     selectedApp.isRunning 
@@ -391,7 +392,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Focus Mode Configuration Modal (With Active System Toggles) */}
+        {/* Focus Mode & Toggles Configuration Modal */}
         {isFocusModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
             <FocusModeConfigModal
@@ -443,14 +444,14 @@ function FocusModeConfigModal({
       <div>
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <Gamepad2 className="w-5 h-5 text-emerald-400" />
-          Focus Mode & System Toggles
+          Force Stop & System Toggles
         </h2>
-        <p className="text-xs font-mono text-white/50">Stop selected apps and turn off active system background services to save battery.</p>
+        <p className="text-xs font-mono text-white/50">Stop background apps and turn off hardware toggles to maximize battery life.</p>
       </div>
 
       {/* Active System Toggles Section */}
       <div className="space-y-2">
-        <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">Active System Toggles (Wi-Fi, GPS, Bluetooth):</span>
+        <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">System Toggles to Turn Off:</span>
         <div className="space-y-2">
           {systemToggles.map(toggle => {
             const IconComp = toggle.icon;
@@ -512,7 +513,7 @@ function FocusModeConfigModal({
         onClick={() => onApplyFocus(selectedAppsToStop, selectedTogglesToTurnOff)}
         className="w-full py-3.5 rounded-2xl bg-emerald-500 text-black font-extrabold text-xs tracking-wide shadow-lg shadow-emerald-500/30 cursor-pointer hover:bg-emerald-400 transition-all"
       >
-        Apply Focus Mode & Optimize Toggles
+        Force Stop Selected & Turn Off Toggles
       </button>
     </div>
   );
